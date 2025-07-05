@@ -4,31 +4,46 @@ from config import CROP_FEATURES, SUSTAINABILITY_FEATURES, YIELD_FEATURES
 class DataPreprocessor:
     # Normalization parameters (should match training preprocessing)
     # These would typically be saved/loaded from files, but hardcoded for simplicity
-    CROP_MEAN = np.array([50.55, 42.36, 48.15, 25.62, 71.48, 6.47, 103.46])
-    CROP_STD = np.array([36.92, 50.65, 49.96, 5.06, 22.26, 0.77, 54.86])
+    # @TODO For 17 crop features (10 numeric + 7 one-hot)
+    CROP_MEAN = np.array([
+            50.55, 42.36, 48.15, 25.62, 71.48, 6.47, 103.46, # 7 original features
+            65.0, 15.0, 8.0,    # soil_moisture_pct, fertilizer_usage_kg, pesticide_usage_kg
+            0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.5   # one-hot crop flags (mostly 0, with "other" being common)
+        ])
+    CROP_STD = np.array([
+            36.92, 50.65, 49.96, 5.06, 22.26, 0.77, 54.86,
+            15.0, 10.0, 5.0,  # soil_moisture_pct, fertilizer_usage_kg, pesticide_usage_kg
+            0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.5  # one-hot crop flags
+        ])
     
-    SUSTAINABILITY_MEAN = np.array([500.0, 250.0, 150.0, 10.0])
-    SUSTAINABILITY_STD = np.array([150.0, 75.0, 50.0, 5.0])
+    # For 4 sustainability features
+    SUSTAINABILITY_MEAN = np.array([25.0, 70.0, 6.5, 100.0])     # temp, humidity, ph, rainfall
+    SUSTAINABILITY_STD = np.array([5.0, 20.0, 1.0, 50.0])
     
-    YIELD_MEAN = np.array([40.0, -100.0, 3.0, 5.0, 150.0, 250.0, 100.0, 500.0])
-    YIELD_STD = np.array([10.0, 20.0, 2.0, 2.0, 30.0, 50.0, 50.0, 200.0])
+    # @TODO For 13 yield features (6 numeric + 7 hot-one)
+    YIELD_MEAN = np.array([
+            6.5, 65.0, 25.0, 100.0, 15.0, 8.0,  # 6 numeric features
+            0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.5   # 7 one-hot crop flags
+        ])
+    YIELD_STD = np.array([
+            1.0, 15.0, 5.0, 50.0, 10.0, 5.0,  # 6 numeric features
+            0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.5  # 7 one-hot crop flags
+        ])
     
     # Crop type mapping (should match training data)
     CROP_TYPES = [
-        'rice', 'maize', 'chickpea', 'kidneybeans', 'pigeonpeas',
-        'mothbeans', 'mungbean', 'blackgram', 'lentil', 'pomegranate',
-        'banana', 'mango', 'grapes', 'watermelon', 'muskmelon',
-        'apple', 'orange', 'papaya', 'coconut', 'cotton',
-        'jute', 'coffee'
+        'rice', 'wheat', 'corn', 'sugarcane', 'pulses', 'cotton', 'other'
     ]
     
     @staticmethod
     def normalize_crop_input(data: dict) -> np.ndarray:
         """Normalize crop recommendation input features"""
         features = np.array([
-            data['N'], data['P'], data['K'],
-            data['temperature'], data['humidity'],
-            data['ph'], data['rainfall']
+            data['n'], data['p'], data['k'],
+            data['temperature_c'], data['humidity_pct'],
+            data['soil_ph'], data['rainfall_mm'],
+            data['soil_moisture_pct'], data['fertilizer_usage_kg'],
+            data['pesticide_usage_kg']
         ], dtype=np.float32)
         
         return (features - DataPreprocessor.CROP_MEAN) / DataPreprocessor.CROP_STD
