@@ -21,6 +21,15 @@ def to_tensor(data: np.ndarray, device: str = None) -> torch.Tensor:
         tensor = tensor.to(device)
     return tensor
 
+def get_device() -> str:
+    """Get the best available device (GPU if available, else CPU)"""
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():  # For Apple Silicon Macs
+        return "mps"
+    else:
+        return "cpu"
+
 def get_current_season() -> str:
     """Get current growing season based on month"""
     month = datetime.now().month
@@ -41,7 +50,3 @@ def log_prediction(endpoint: str, input_data: dict, prediction: Any) -> None:
     """Log prediction details (in real app, would write to database)"""
     timestamp = datetime.now().isoformat()
     print(f"[{timestamp}] {endpoint} prediction - Input: {input_data}, Result: {prediction}")
-
-def error_response(message: str, status_code: int = 400) -> tuple:
-    """Create standardized error response"""
-    return jsonify({"error": message}), status_code

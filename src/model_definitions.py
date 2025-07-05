@@ -4,25 +4,29 @@ import torch.nn as nn
 from src.utils import get_device
 
 class CropRecommender(nn.Module):
-    """Neural network for crop recommendation with embedding output"""
-    def __init__(self, input_size, embedding_size=64):
+    """Neural network for crop recommendation"""
+    def __init__(self, input_size, num_classes):
         super(CropRecommender, self).__init__()
         self.device = get_device()
-        # Match the CropEmbeddingModel from your training code
         self.fc1 = nn.Linear(input_size, 128)
-        self.fc2 = nn.Linear(128, embedding_size)
+        self.fc2 = nn.Linear(128, 64)
+        self.fc3 = nn.Linear(64, num_classes)  # Output layer for classification
         self.relu = nn.ReLU()
         self.dropout = nn.Dropout(0.3)
         
     def forward(self, x):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
-        x = self.fc2(x)
-        return x  # Return embeddings instead of class probabilities
+        x = self.relu(self.fc2(x))
+        x = self.dropout(x)
+        x = self.fc3(x)
+        return x
         
     def predict(self, x):
         self.eval()
         with torch.no_grad():
+            if not isinstance(x, torch.Tensor):
+                x = torch.tensor(x, dtype=torch.float32)
             x = x.to(self.device)
             outputs = self.forward(x)
             _, predicted = torch.max(outputs, 1)
@@ -33,7 +37,6 @@ class YieldPredictor(nn.Module):
     def __init__(self, input_size):
         super(YieldPredictor, self).__init__()
         self.device = get_device()
-        # Match your training code exactly
         self.fc1 = nn.Linear(input_size, 256)
         self.fc2 = nn.Linear(256, 128)
         self.fc3 = nn.Linear(128, 64)
@@ -53,6 +56,8 @@ class YieldPredictor(nn.Module):
     def predict(self, x):
         self.eval()
         with torch.no_grad():
+            if not isinstance(x, torch.Tensor):
+                x = torch.tensor(x, dtype=torch.float32)
             x = x.to(self.device)
             outputs = self.forward(x)
         return outputs
@@ -62,7 +67,6 @@ class SustainabilityPredictor(nn.Module):
     def __init__(self, input_size):
         super(SustainabilityPredictor, self).__init__()
         self.device = get_device()
-        # Match your training code exactly
         self.fc1 = nn.Linear(input_size, 128)
         self.fc2 = nn.Linear(128, 64)
         self.fc3 = nn.Linear(64, 32)
@@ -82,11 +86,12 @@ class SustainabilityPredictor(nn.Module):
     def predict(self, x):
         self.eval()
         with torch.no_grad():
+            if not isinstance(x, torch.Tensor):
+                x = torch.tensor(x, dtype=torch.float32)
             x = x.to(self.device)
             outputs = self.forward(x)
         return outputs
 
-# If you need the CropEmbeddingModel class for compatibility
 class CropEmbeddingModel(nn.Module):
     """Neural network for crop recommendation with embedding output"""
     def __init__(self, input_size, embedding_size=64):
@@ -101,12 +106,21 @@ class CropEmbeddingModel(nn.Module):
         x = self.relu(self.fc1(x))
         x = self.dropout(x)
         x = self.fc2(x)
-        return x  # Return embeddings instead of class probabilities
+        return x  # Return embeddings
         
     def predict(self, x):
         self.eval()
         with torch.no_grad():
+            if not isinstance(x, torch.Tensor):
+                x = torch.tensor(x, dtype=torch.float32)
             x = x.to(self.device)
             outputs = self.forward(x)
-            _, predicted = torch.max(outputs, 1)
-        return predicted
+            # For embeddings, you might want to return the embedding vector
+            # or use similarity matching for crop recommendation
+        return outputs
+
+# Utility function to move models to device
+def move_model_to_device(model):
+    """Move model to the appropriate device"""
+    device = get_device()
+    return model.to(device)

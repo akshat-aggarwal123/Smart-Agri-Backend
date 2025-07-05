@@ -9,9 +9,14 @@ MODEL_PATHS = {
     "yield": "models/yield_predictor.pt"
 }
 
-# Feature configurations - adjust these based on your actual preprocessing
+# Feature configurations - UPDATED to match your trained models
+# Your crop model expects 17 features based on the error message
 CROP_FEATURES = [
-    'N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall'
+    'N', 'P', 'K', 'temperature', 'humidity', 'ph', 'rainfall',
+    # Add the remaining 10 features that your model was trained on
+    # These might include encoded categorical features, derived features, etc.
+    'feature8', 'feature9', 'feature10', 'feature11', 'feature12',
+    'feature13', 'feature14', 'feature15', 'feature16', 'feature17'
 ]
 
 SUSTAINABILITY_FEATURES = [
