@@ -1,4 +1,3 @@
-# routes/api_routes.py
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
 from typing import Literal, Dict, Callable
@@ -32,7 +31,7 @@ class CropPredictionRequest(BaseModel):
     pesticide_usage_kg: float
     crop_type: Literal[
         "rice", "wheat", "corn", "sugarcane", "pulses", "cotton", "other"
-    ] = Field(..., description="Plain string; one‑hot happens server‑side")
+    ] = Field(default="other", description="Plain string; one‑hot happens server‑side")
 
 
 class SustainabilityPredictionRequest(BaseModel):
@@ -51,7 +50,7 @@ class YieldPredictionRequest(BaseModel):
     pesticide_usage_kg: float
     crop_type: Literal[
         "rice", "wheat", "corn", "sugarcane", "pulses", "cotton", "other"
-    ]
+    ] = Field(default="other")
 
 
 class CropPredictionResponse(BaseModel):
@@ -78,29 +77,29 @@ def get_models() -> Dict[str, object]:
 # Key‑alias maps – clean API → training feature names
 # --------------------------------------------------------------------------
 CROP_ALIAS = {
-    "n": "N",
-    "p": "P",
-    "k": "K",
-    "temperature_c": "temperature",
-    "humidity_pct": "humidity",
-    "rainfall_mm": "rainfall",
-    "soil_ph": "ph",            # ← ADD THIS LINE
-    # soil_moisture_pct already matches training name?
+    "n": "n",  # Keep as 'n' to match preprocessing
+    "p": "p",  # Keep as 'p' to match preprocessing  
+    "k": "k",  # Keep as 'k' to match preprocessing
+    "temperature_c": "temperature_c",
+    "humidity_pct": "humidity_pct",
+    "rainfall_mm": "rainfall_mm",
+    "soil_ph": "soil_ph",
+    # No aliasing needed - keep field names as they are
 }
 
 YIELD_ALIAS = {
-    "temperature_c": "temperature",
-    "rainfall_mm": "rainfall",
-    "soil_ph": "ph",            # ← ADD THIS TOO
-    # add others only if training names differ
+    "temperature_c": "temperature_c",
+    "rainfall_mm": "rainfall_mm",
+    "soil_ph": "soil_ph",
+    # No aliasing needed - keep field names as they are
 }
 
-# For sustainability we left alias_map=None, so add a map
+# For sustainability - no aliasing needed
 SUS_ALIAS = {
-    "temperature_c": "temperature",
-    "humidity_pct": "humidity",
-    "rainfall_mm": "rainfall",
-    "soil_ph": "ph",
+    "temperature_c": "temperature_c",
+    "humidity_pct": "humidity_pct",
+    "rainfall_mm": "rainfall_mm",
+    "soil_ph": "soil_ph",
 }
 
 
@@ -119,18 +118,37 @@ async def _predict(
     raw_predict_fn: Callable,
     alias_map: Dict[str, str] | None,
     response_model: BaseModel,
+    response_field: str,
     models: Dict[str, object],
 ):
     try:
+        # Convert request to dict
         data = request_data.dict()
+        
+        # Apply field name aliases if provided
         if alias_map:
             data = _apply_alias(data, alias_map)
 
-        prediction = raw_predict_fn(models[model_key], data)
+        # Get the model
+        model = models.get(model_key)
+        if model is None:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=f"{model_key} model not available"
+            )
+
+        # Make prediction
+        prediction = raw_predict_fn(model, data)
+        
+        # Log the prediction
         log_prediction(model_key, data, prediction)
-        return response_model({response_model.model_fields.keys()[0]: prediction})
+        
+        # Create response with the correct field name
+        return response_model(**{response_field: prediction})
 
     except Exception as exc:
+        print(f"Prediction error in {model_key}: {exc}")
+        print(f"Input data: {data if 'data' in locals() else request_data.dict()}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Prediction failed: {exc}",
@@ -154,6 +172,7 @@ async def crop_endpoint(
         raw_predict_fn=predict_crop,
         alias_map=CROP_ALIAS,
         response_model=CropPredictionResponse,
+        response_field="recommended_crop",
         models=models,
     )
 
@@ -170,8 +189,9 @@ async def sustainability_endpoint(
         request_data=req,
         model_key="sustainability",
         raw_predict_fn=predict_sustainability,
-        alias_map=None,
+        alias_map=SUS_ALIAS,
         response_model=SustainabilityPredictionResponse,
+        response_field="sustainability_score",
         models=models,
     )
 
@@ -190,5 +210,12 @@ async def yield_endpoint(
         raw_predict_fn=predict_yield,
         alias_map=YIELD_ALIAS,
         response_model=YieldPredictionResponse,
+        response_field="predicted_yield_kg_per_hectare",
         models=models,
     )
+
+
+# Health check endpoint
+@api_router.get("/health")
+async def health_check():
+    return {"status": "healthy", "message": "Agricultural Prediction API is running"}
