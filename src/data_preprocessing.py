@@ -38,22 +38,37 @@ class DataPreprocessor:
     @staticmethod
     def normalize_crop_input(data: dict) -> np.ndarray:
         """Normalize crop recommendation input features"""
-        features = np.array([
+        numeric_features = np.array([
             data['n'], data['p'], data['k'],
             data['temperature_c'], data['humidity_pct'],
             data['soil_ph'], data['rainfall_mm'],
             data['soil_moisture_pct'], data['fertilizer_usage_kg'],
             data['pesticide_usage_kg']
         ], dtype=np.float32)
+
+        # Create one-hot encoding for crop-type (7 Features)
+        crop_type = data.get('crop_type', 'other').lower()
+        crop_onehot = np.zeros(7, dtype=np.float32)
+
+        crop_mapping = {
+            'rice': 0, 'wheat': 1, 'corn': 2, 'sugarcane': 3,
+            'pulses': 4, 'cotton': 5, 'other': 6
+        }
+
+        crop_idx = crop_mapping.get(crop_type, 6) # Default to 'other'
+        crop_onehot[crop_idx] = 1.0
+
+        # Combine all features 
+        all_features = np.concatenate([numeric_features, crop_onehot])
         
-        return (features - DataPreprocessor.CROP_MEAN) / DataPreprocessor.CROP_STD
+        return (all_features - DataPreprocessor.CROP_MEAN) / DataPreprocessor.CROP_STD
     
     @staticmethod
     def normalize_sustainability_input(data: dict) -> np.ndarray:
         """Normalize sustainability prediction input features"""
         features = np.array([
-            data['water_usage'], data['energy_consumption'],
-            data['co2_emissions'], data['land_usage']
+            data['temperature_c'], data['humidity_pct'],
+            data['soil_ph'], data['rainfall_mm']
         ], dtype=np.float32)
         
         return (features - DataPreprocessor.SUSTAINABILITY_MEAN) / DataPreprocessor.SUSTAINABILITY_STD
@@ -61,23 +76,30 @@ class DataPreprocessor:
     @staticmethod
     def normalize_yield_input(data: dict) -> np.ndarray:
         """Normalize yield prediction input features"""
-        # Convert categorical features to numerical
-        soil_type = DataPreprocessor._encode_soil_type(data['soil_type'])
-        crop_variety = DataPreprocessor._encode_crop_variety(data['crop_variety'])
-        
-        # Convert dates to day of year
-        planting_doy = DataPreprocessor._date_to_doy(data['planting_date'])
-        harvest_doy = DataPreprocessor._date_to_doy(data['harvest_date'])
-        
-        features = np.array([
-            data['location_lat'], data['location_lon'],
-            soil_type, crop_variety,
-            planting_doy, harvest_doy,
-            data['fertilizer_amount'], data['rainfall']
+        # Extract numeric features (6 total) - using fields that API actually sends
+        numeric_features = np.array([
+            data['soil_ph'], data['soil_moisture_pct'],
+            data['temperature_c'], data['rainfall_mm'],
+            data['fertilizer_usage_kg'], data['pesticide_usage_kg']
         ], dtype=np.float32)
         
-        return (features - DataPreprocessor.YIELD_MEAN) / DataPreprocessor.YIELD_STD
-    
+        # Create one-hot encoding for crop type (7 features)
+        crop_type = data.get('crop_type', 'other').lower()
+        crop_onehot = np.zeros(7, dtype=np.float32)
+        
+        crop_mapping = {
+            'rice': 0, 'wheat': 1, 'corn': 2, 'sugarcane': 3,
+            'pulses': 4, 'cotton': 5, 'other': 6
+        }
+        
+        crop_idx = crop_mapping.get(crop_type, 6)  # Default to 'other'
+        crop_onehot[crop_idx] = 1.0
+        
+        # Combine all features (6 numeric + 7 one-hot = 13 total)
+        all_features = np.concatenate([numeric_features, crop_onehot])
+        
+        return (all_features - DataPreprocessor.YIELD_MEAN) / DataPreprocessor.YIELD_STD
+ 
     @staticmethod
     def _encode_soil_type(soil_type: str) -> int:
         """Encode soil type to numerical value"""
