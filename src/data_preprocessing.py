@@ -16,9 +16,17 @@ class DataPreprocessor:
             0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.5  # one-hot crop flags
         ])
     
-    # For 4 sustainability features
-    SUSTAINABILITY_MEAN = np.array([25.0, 70.0, 6.5, 100.0])     # temp, humidity, ph, rainfall
-    SUSTAINABILITY_STD = np.array([5.0, 20.0, 1.0, 50.0])
+    # For 10 sustainability features (to match model input size)
+    SUSTAINABILITY_MEAN = np.array([
+        25.0, 70.0, 6.5, 100.0,  # temp, humidity, ph, rainfall
+        65.0, 15.0, 8.0,         # soil_moisture_pct, fertilizer_usage_kg, pesticide_usage_kg
+        0.1, 0.1, 0.5            # simplified crop features (rice, wheat, other dominant)
+    ])
+    SUSTAINABILITY_STD = np.array([
+        5.0, 20.0, 1.0, 50.0,    # temp, humidity, ph, rainfall
+        15.0, 10.0, 5.0,         # soil_moisture_pct, fertilizer_usage_kg, pesticide_usage_kg
+        0.3, 0.3, 0.5            # crop features
+    ])
     
     # @TODO For 13 yield features (6 numeric + 7 hot-one)
     YIELD_MEAN = np.array([
