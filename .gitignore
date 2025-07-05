@@ -1,0 +1,93 @@
+# .gitignore for Smart Agriculture Backend
+
+# Python and virtual environment
+venv/
+.venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.py.class
+.python-version
+
+# Development environments
+.vscode/
+.idea/
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# Build and distribution
+build/
+dist/
+*.egg-info/
+*.egg
+*.manifest
+*.spec
+pip-wheel-metadata/
+
+# Log files
+*.log
+logs/
+
+# Test files
+.coverage
+htmlcov/
+.pytest_cache/
+tests/__pycache__/
+
+# Configuration files
+.env
+.env.local
+.env.*.local
+secrets.ini
+config_secret.py
+
+# Model files (large binaries)
+models/*.pt
+!models/README.md  # Keep README if exists
+
+# Data files
+*.csv
+*.h5
+*.npy
+*.pkl
+*.joblib
+data/
+
+# OS generated files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Documentation
+docs/_build/
+_site/
+
+# Jupyter notebooks
+*.ipynb
+*.ipynb_checkpoints/
+
+# Byte-compiled / optimized / DLL files
+*.so
+*.dll
+
+# Backup files
+*.bak
+*.tmp
+*~
+
+# Frontend artifacts (if any in backend repo)
+node_modules/
+static/
+assets/
+*.css
+*.js
+*.map
+
+# Misc
+.cache
+*.swp
+*~
+*.orig
