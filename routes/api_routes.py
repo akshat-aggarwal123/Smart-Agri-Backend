@@ -39,6 +39,13 @@ class SustainabilityPredictionRequest(BaseModel):
     humidity_pct: float
     soil_ph: float
     rainfall_mm: float
+    # Optional fields with defaults for sustainability calculation
+    soil_moisture_pct: float = 65.0
+    fertilizer_usage_kg: float = 15.0
+    pesticide_usage_kg: float = 8.0
+    crop_type: Literal[
+        "rice", "wheat", "corn", "sugarcane", "pulses", "cotton", "other"
+    ] = Field(default="other")
 
 
 class YieldPredictionRequest(BaseModel):
