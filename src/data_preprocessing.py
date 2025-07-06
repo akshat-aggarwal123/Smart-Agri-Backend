@@ -28,16 +28,17 @@ class DataPreprocessor:
         0.3, 0.3, 0.5            # crop features
     ])
     
-    # @TODO For 13 yield features (6 numeric + 7 hot-one)
+    # @TODO For 10 yield features     
     YIELD_MEAN = np.array([
-            6.5, 65.0, 25.0, 100.0, 15.0, 8.0,  # 6 numeric features
-            0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.5   # 7 one-hot crop flags
-        ])
-    YIELD_STD = np.array([
-            1.0, 15.0, 5.0, 50.0, 10.0, 5.0,  # 6 numeric features
-            0.3, 0.3, 0.3, 0.3, 0.3, 0.3, 0.5  # 7 one-hot crop flags
-        ])
+        6.5, 65.0, 25.0, 100.0, 15.0, 8.0,  # 6 numeric features
+        0.1, 0.1, 0.1, 0.5                   # 4 simplified crop flags (rice, wheat, corn, other)
+    ])
     
+    YIELD_STD = np.array([
+        1.0, 15.0, 5.0, 50.0, 10.0, 5.0,    # 6 numeric features
+        0.3, 0.3, 0.3, 0.5                   # 4 simplified crop flags
+    ])
+
     # Crop type mapping (should match training data)
     CROP_TYPES = [
         'rice', 'wheat', 'corn', 'sugarcane', 'pulses', 'cotton', 'other'
@@ -113,22 +114,25 @@ class DataPreprocessor:
             data['fertilizer_usage_kg'], data['pesticide_usage_kg']
         ], dtype=np.float32)
         
-        # Create one-hot encoding for crop type (7 features)
+        # Create simplified one-hot encoding for crop type (4 features instead of 7)
+        # Group similar crops together to reduce dimensions
         crop_type = data.get('crop_type', 'other').lower()
-        crop_onehot = np.zeros(7, dtype=np.float32)
+        crop_onehot = np.zeros(4, dtype=np.float32)
         
-        crop_mapping = {
-            'rice': 0, 'wheat': 1, 'corn': 2, 'sugarcane': 3,
-            'pulses': 4, 'cotton': 5, 'other': 6
-        }
+        # Simplified crop mapping (4 categories instead of 7)
+        if crop_type == 'rice':
+            crop_onehot[0] = 1.0    # rice
+        elif crop_type == 'wheat':
+            crop_onehot[1] = 1.0    # wheat  
+        elif crop_type == 'corn':
+            crop_onehot[2] = 1.0    # corn
+        else:  # sugarcane, pulses, cotton, other
+            crop_onehot[3] = 1.0    # other crops
         
-        crop_idx = crop_mapping.get(crop_type, 6)  # Default to 'other'
-        crop_onehot[crop_idx] = 1.0
-        
-        # Combine all features (6 numeric + 7 one-hot = 13 total)
+        # Combine all features (6 numeric + 4 one-hot = 10 total)
         all_features = np.concatenate([numeric_features, crop_onehot])
         
-        return (all_features - DataPreprocessor.YIELD_MEAN) / DataPreprocessor.YIELD_STD
+        return (all_features - DataPreprocessor.YIELD_MEAN) / DataPreprocessor.YIELD_STD 
  
     @staticmethod
     def _encode_soil_type(soil_type: str) -> int:
