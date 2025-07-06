@@ -74,12 +74,34 @@ class DataPreprocessor:
     @staticmethod
     def normalize_sustainability_input(data: dict) -> np.ndarray:
         """Normalize sustainability prediction input features"""
-        features = np.array([
+        # Extract basic environmental features (4 features)
+        environmental_features = np.array([
             data['temperature_c'], data['humidity_pct'],
             data['soil_ph'], data['rainfall_mm']
         ], dtype=np.float32)
         
-        return (features - DataPreprocessor.SUSTAINABILITY_MEAN) / DataPreprocessor.SUSTAINABILITY_STD
+        # Add default agricultural practice features (3 features)
+        # These are typical/average values since the API doesn't send them
+        agricultural_features = np.array([
+            data.get('soil_moisture_pct', 65.0),      # Default soil moisture
+            data.get('fertilizer_usage_kg', 15.0),    # Default fertilizer usage
+            data.get('pesticide_usage_kg', 8.0)       # Default pesticide usage
+        ], dtype=np.float32)
+        
+        # Add simplified crop representation (3 features)
+        # Since sustainability may depend on crop type
+        crop_type = data.get('crop_type', 'other').lower()
+        if crop_type == 'rice':
+            crop_features = np.array([1.0, 0.0, 0.0], dtype=np.float32)  # rice
+        elif crop_type == 'wheat':
+            crop_features = np.array([0.0, 1.0, 0.0], dtype=np.float32)  # wheat
+        else:
+            crop_features = np.array([0.0, 0.0, 1.0], dtype=np.float32)  # other
+        
+        # Combine all features (4 + 3 + 3 = 10 total)
+        all_features = np.concatenate([environmental_features, agricultural_features, crop_features])
+        
+        return (all_features - DataPreprocessor.SUSTAINABILITY_MEAN) / DataPreprocessor.SUSTAINABILITY_STD 
     
     @staticmethod
     def normalize_yield_input(data: dict) -> np.ndarray:
