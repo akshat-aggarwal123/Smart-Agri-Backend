@@ -35,9 +35,11 @@ CROP_FEATURES = [
     "crop_pulses", "crop_cotton", "crop_other",
 ]
 
-# Sustainability score (4 numeric inputs)
+# Sustainability score (10 inputs = 4 environmental + 3 agricultural + 3 crop flags)
 SUSTAINABILITY_FEATURES = [
     "temperature_c", "humidity_pct", "soil_ph", "rainfall_mm",
+    "soil_moisture_pct", "fertilizer_usage_kg", "pesticide_usage_kg",
+    "crop_rice", "crop_wheat", "crop_other",
 ]
 
 # Yield predictor (6 numeric + 7 one‑hot crop flags = 13 total)
