@@ -42,13 +42,12 @@ SUSTAINABILITY_FEATURES = [
     "crop_rice", "crop_wheat", "crop_other",
 ]
 
-# Yield predictor (6 numeric + 7 one‑hot crop flags = 13 total)
+# Yield predictor (6 numeric + 4 simplified crop flags = 10 total)
 YIELD_FEATURES = [
     "soil_ph", "soil_moisture_pct", "temperature_c", "rainfall_mm",
     "fertilizer_usage_kg", "pesticide_usage_kg",
-    # one‑hot crop flags
-    "crop_rice", "crop_wheat", "crop_corn", "crop_sugarcane",
-    "crop_pulses", "crop_cotton", "crop_other",
+    # simplified crop flags (grouped categories)
+    "crop_rice", "crop_wheat", "crop_corn", "crop_other",
 ]
 
 # ---------------------------------------------------------------------------
